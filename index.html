@@ -18,22 +18,42 @@
 
 <!-- Usei o código de quando eu tentei fazer um clone daqueles "batalha de favoritos" -->
 
-<!--
+
 
 <form id="selectvis">
-    <label><input type="radio" id="vis1" name="w" value="vis1"> Acidentes no Mapa </input></label>  
-    <label><input type="radio" id="vis2" name="w" value="vis2"> Acidentes por Estado</input></label> 
-    <label><input type="radio" id="vis2" name="w" value="vis3"> Acidentes por Município </input></label>   
+    <label><input type="radio" id="vis1" name="w" value="vis1"> Notas por Estado </input></label>  
+    <label><input type="radio" id="vis2" name="w" value="vis2"> Notas por Instituição</input></label> 
 </form>
 
--->
+<select id="dropdown"> <!--Supplement an id here instead of using 'text'-->
+  <option value="mean">Nota média</option> 
+  <option value="top">1% melhores</option>
+  <option value="bottom">1% piores</option>
+</select>
+
 
  <!-- Make sure you put this AFTER Leaflet's CSS -->
- <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
    integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
    crossorigin=""></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script type="text/javascript">
+
+//Variáveis globais
+
+var myMap = null
+var div = d3.select("body").append("div").attr("id","leafletmap")
+var geoLayer = null
+var selectedVis = null
+
+//Seletores e callbacks
+
+//Funções
+function drawMapInitial()
+{
+    myMap = new L.Map("leafletmap", {center: [-10.3333,-53.2], zoom: 4}).addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
+}
+
 
 //Função que faz a legenda
 //Cria uma série de pequenos retângulos com as cores da escala, para representar a estala.
@@ -64,54 +84,8 @@ var addLegend = function(target, transformer, width)
 	}
 }
 
-var drawMapStates = function(error,data)
+function drawStatesVis(error,data)
 {
-    let div = d3.select("body").append("div").attr("id","leafletmap")
-
-    let map = new L.Map("leafletmap", {center: [-10.3333,-53.2], zoom: 4}).addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
-
-
-    function parseCallback(responseText)
-	{
-		var parser = d3.dsvFormat("~");
-		return parser.parse(responseText)
-	}
-
-    //Aqui em vez de usar o d3 para desenhar o GeoJSON, usei a camada de GeoJson do leaflet.
-    //A lógica de contagem de acidentes é a mesma do problema 1.
-    function drawMapCallback(error, response)
-    {
-    	var accidentsData = parseCallback(response.responseText)
-
-    	var accidentsCount = d3.nest().key(d=>d.ocorrencia_uf).rollup(v=>v.length).entries(accidentsData)
-    	var rangeNumAccidents = d3.extent(accidentsCount,o=>o.value)
-
-    	var colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(rangeNumAccidents)
-
-    	accidentsCountDict = {}
-
-    	for(var i = 0 ; i < accidentsCount.length ; i++)
-    	{
-    		accidentsCountDict[accidentsCount[i].key] = accidentsCount[i].value
-    	}
-
-        //Essa função determina a cor do polígono do estado, de acordo com o número de acidentes.
-        function featureStyle(feature)
-        {
-            let dict = {
-                "fillColor": colorScaler(accidentsCountDict[feature.properties.sigla]),
-                "color":"black",
-                "stroke":false,
-                "fillOpacity":0.3
-            }
-            return dict
-        }
-
-        L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(map);
-
-    	addLegend(d3.select("body"), colorScaler, 500)
-	}
-
     function drawMapCallback2(error, csv)
     {
         statesCodes = {11:"RO",28:"SE",12:"AC",29:"BA",13:"AM",31:"MG",14:"RR",32:"ES",15:"PA",33:"RJ",16:"AP",35:"SP",17:"TO",41:"PR",21:"MA",42:"SC",22:"PI",43:"RS",23:"CE",50:"MS",24:"RN",51:"MT",25:"PB",52:"GO",26:"PE",53:"DF",27:"AL"}
@@ -125,11 +99,10 @@ var drawMapStates = function(error,data)
         
         gradesByState.forEach(d=>gradesDict[statesCodes[d.key]] = d.value)
         
-    	var colorScaler = d3.scaleSequential(d3.interpolateWarm).domain([0,93.2])
+    	var colorScaler = d3.scaleSequential(d3.interpolateWarm).domain([0,93.2/2])
     	
     	function featureStyle(feature)
         {
-            a = 1
             let dict = {
                 "fillColor": colorScaler(gradesDict[feature.properties.sigla]),
                 "color":"black",
@@ -138,51 +111,54 @@ var drawMapStates = function(error,data)
             }
             return dict
         }
-        //Adicionar hover com a nota
-    	
-    	L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(map);
+        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
     	addLegend(d3.select("body"), colorScaler, 500)
     }
-    d3.csv('dados_enade_red.csv').get(drawMapCallback2)
+    	
 
+    d3.csv('dados_enade.csv').get(drawMapCallback2)
 
-
-    
-    //d3.request("https://raw.githubusercontent.com/nosbielcs/opendata_aig_brazil/master/data/oco.csv").get(drawMapCallback)
 }
 
-
-var drawStatesVis = function()
-{
-	d3.json("https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson",drawMapStates)
-}
 
 var callbackSelectVis = function(event)
 { 
-   	body = d3.select("body")
-    body.selectAll("svg").remove()
-    body.selectAll("div").remove()
+    let radioValue = document.querySelector('input[name="w"]:checked').value;
+    
+    let de = document.querySelector('select#dropdown')
+    let dropdownValue = de.options[de.selectedIndex].value;    
+     
+    let vis = radioValue + '-' + dropdownValue
+    
+    console.log(vis)
+    
+    d3.select("svg#legend").remove()
+   	if(geoLayer != null)
+   	{
+   	    myMap.removeLayer(geoLayer)
+   	}
 	
     var selected = event.target.value
 
     if(selected == "vis1")
     {
-        drawCitiesVis()
+        d3.json("https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson",drawStatesVis)
     }
     else if(selected == "vis2")
     {
-        drawStatesVis()
-    }
-    else if(selected == "vis3")
-    {
-        drawCitiesVis2()
+        console.log("nada")   
     }
 }
 
-//var formElement = document.querySelector('form#selectvis')
-//formElement.addEventListener('change', callbackSelectVis);
+var formElement = document.querySelector('form#selectvis')
+formElement.addEventListener('change', callbackSelectVis);
 
-drawStatesVis()
+var dropdownElement = document.querySelector('select#dropdown')
+dropdownElement.addEventListener('change', callbackSelectVis);
+
+
+
+drawMapInitial()
 
 
 </script>
