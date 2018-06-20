@@ -95,7 +95,64 @@ var addLegend = function(target, transformer, width)
 }
 
 function drawStatesVis(error,data)
-{
+{   
+    function drawBottom()
+    {
+    
+        function isNumeric(n)
+        {
+            return !isNaN(parseFloat(n)) && isFinite(n);
+        }
+        
+        statesCodes = {11:"RO",28:"SE",12:"AC",29:"BA",13:"AM",31:"MG",14:"RR",32:"ES",15:"PA",33:"RJ",16:"AP",35:"SP",17:"TO",41:"PR",21:"MA",42:"SC",22:"PI",43:"RS",23:"CE",50:"MS",24:"RN",51:"MT",25:"PB", 52:"GO",26:"PE",53:"DF",27:"AL"}
+        
+        if(cf == null)
+        {
+            cf = crossfilter(entireData)        
+        }
+        
+        if(gradesDimension == null)
+        {
+            gradesDimension = cf.dimension(d=>d.NT_GER)
+        }
+        
+        gradesDimension.filter(d=>isNumeric(d))
+        
+        let top1value = 0.01 * cf.size()
+        
+        let top1 = gradesDimension.bottom(top1value) 
+        
+        let countsByState = d3.nest()
+                            .key(function(d) { return d.CO_UF_CURSO; })
+                            .rollup(function(v) { return v.length;})
+                            .entries(top1)
+                            
+        let countsDict = {}
+              
+        countsByState.forEach(d=>countsDict[statesCodes[d.key]] = d.value)
+               
+        let domain = d3.extent(countsByState,d=>d.value)
+        domain[0] = 0.9 * domain[0]
+        domain[1] = 1.1 * domain[1]
+        
+    	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
+    	
+    	function featureStyle(feature)
+        {
+            let dict = {
+                "fillColor": colorScaler(countsDict[feature.properties.sigla]),
+                "color":"black",
+                "stroke":false,
+                "fillOpacity":0.3
+            }
+            return dict
+        }
+        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
+    	addLegend(d3.select("body"), colorScaler, 500)
+    	
+    	gradesDimension.filterAll()
+    }
+    
     function drawTop()
     {
         statesCodes = {11:"RO",28:"SE",12:"AC",29:"BA",13:"AM",31:"MG",14:"RR",32:"ES",15:"PA",33:"RJ",16:"AP",35:"SP",17:"TO",41:"PR",21:"MA",42:"SC",22:"PI",43:"RS",23:"CE",50:"MS",24:"RN",51:"MT",25:"PB", 52:"GO",26:"PE",53:"DF",27:"AL"}
@@ -117,7 +174,7 @@ function drawStatesVis(error,data)
         let countsByState = d3.nest()
                             .key(function(d) { return d.CO_UF_CURSO; })
                             .rollup(function(v) { return v.length;})
-                            .entries(entireData)
+                            .entries(top1)
                             
         let countsDict = {}
         
@@ -184,6 +241,10 @@ function drawStatesVis(error,data)
         {
             drawTop()
         }
+        else if(selectedVis == 'bottom')
+        {
+            drawBottom()
+        }
     }    
     
 
@@ -221,6 +282,7 @@ var callbackSelectVis = function(event)
     console.log(selectedVis)
     
     d3.select("svg#legend").remove()
+   	
    	if(geoLayer != null)
    	{
    	    myMap.removeLayer(geoLayer)
