@@ -25,7 +25,7 @@
     <label><input type="radio" id="vis2" name="w" value="vis2"> Notas por Instituição</input></label> 
 </form>
 
-<select id="dropdown"> <!--Supplement an id here instead of using 'text'-->
+<select id="dropdown">
   <option value="mean">Nota média</option> 
   <option value="top">1% melhores</option>
   <option value="bottom">1% piores</option>
@@ -38,6 +38,7 @@
    crossorigin=""></script>
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="crossfilter.min.js"></script>
+<script src="constants.js"></script>
 <script type="text/javascript">
 
 //Variáveis globais do mapa do Leaflet
@@ -95,25 +96,39 @@ var addLegend = function(target, transformer, width)
 }
 
 function drawStatesVis(error,data)
-{   
+{
+    function addGeoLayer(arr)
+    {
+        let dict = {}
+              
+        arr.forEach(d=>dict[statesCodes[d.key]] = d.value)
+               
+        let domain = d3.extent(arr,d=>d.value)
+        domain[0] = Math.floor(0.9 * domain[0])
+        domain[1] = Math.ceil(1.1 * domain[1])
+        
+    	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
+    	
+    	function featureStyle(feature)
+        {
+            let featureDict = {
+                "fillColor": colorScaler(dict[feature.properties.sigla]),
+                "color":"black",
+                "stroke":false,
+                "fillOpacity":0.3
+            }
+            return featureDict
+        }
+        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
+    	addLegend(d3.select("body"), colorScaler, 500)
+    }   
+    
     function drawBottom()
     {
     
         function isNumeric(n)
         {
             return !isNaN(parseFloat(n)) && isFinite(n);
-        }
-        
-        statesCodes = {11:"RO",28:"SE",12:"AC",29:"BA",13:"AM",31:"MG",14:"RR",32:"ES",15:"PA",33:"RJ",16:"AP",35:"SP",17:"TO",41:"PR",21:"MA",42:"SC",22:"PI",43:"RS",23:"CE",50:"MS",24:"RN",51:"MT",25:"PB", 52:"GO",26:"PE",53:"DF",27:"AL"}
-        
-        if(cf == null)
-        {
-            cf = crossfilter(entireData)        
-        }
-        
-        if(gradesDimension == null)
-        {
-            gradesDimension = cf.dimension(d=>d.NT_GER)
         }
         
         gradesDimension.filter(d=>isNumeric(d))
@@ -127,46 +142,13 @@ function drawStatesVis(error,data)
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
                             
-        let countsDict = {}
-              
-        countsByState.forEach(d=>countsDict[statesCodes[d.key]] = d.value)
-               
-        let domain = d3.extent(countsByState,d=>d.value)
-        domain[0] = 0.9 * domain[0]
-        domain[1] = 1.1 * domain[1]
-        
-    	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
-    	
-    	function featureStyle(feature)
-        {
-            let dict = {
-                "fillColor": colorScaler(countsDict[feature.properties.sigla]),
-                "color":"black",
-                "stroke":false,
-                "fillOpacity":0.3
-            }
-            return dict
-        }
-        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
-    	addLegend(d3.select("body"), colorScaler, 500)
+        addGeoLayer(countsByState)
     	
     	gradesDimension.filterAll()
     }
     
     function drawTop()
     {
-        statesCodes = {11:"RO",28:"SE",12:"AC",29:"BA",13:"AM",31:"MG",14:"RR",32:"ES",15:"PA",33:"RJ",16:"AP",35:"SP",17:"TO",41:"PR",21:"MA",42:"SC",22:"PI",43:"RS",23:"CE",50:"MS",24:"RN",51:"MT",25:"PB", 52:"GO",26:"PE",53:"DF",27:"AL"}
-        
-        if(cf == null)
-        {
-            cf = crossfilter(entireData)        
-        }
-        
-        if(gradesDimension == null)
-        {
-            gradesDimension = cf.dimension(d=>d.NT_GER)
-        }
-        
         let top1value = 0.01 * cf.size()
         
         let top1 = gradesDimension.top(top1value) 
@@ -178,57 +160,17 @@ function drawStatesVis(error,data)
                             
         let countsDict = {}
         
-        countsByState.forEach(d=>countsDict[statesCodes[d.key]] = d.value)
-               
-        let domain = d3.extent(countsByState,d=>d.value)
-        domain[0] = 0.9 * domain[0]
-        domain[1] = 1.1 * domain[1]
-        
-    	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
-    	
-    	function featureStyle(feature)
-        {
-            let dict = {
-                "fillColor": colorScaler(countsDict[feature.properties.sigla]),
-                "color":"black",
-                "stroke":false,
-                "fillOpacity":0.3
-            }
-            return dict
-        }
-        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
-    	addLegend(d3.select("body"), colorScaler, 500)
+        addGeoLayer(countsByState)
     }
     
     function drawMean()
-    {
-        statesCodes = {11:"RO",28:"SE",12:"AC",29:"BA",13:"AM",31:"MG",14:"RR",32:"ES",15:"PA",33:"RJ",16:"AP",35:"SP",17:"TO",41:"PR",21:"MA",42:"SC",22:"PI",43:"RS",23:"CE",50:"MS",24:"RN",51:"MT",25:"PB",52:"GO",26:"PE",53:"DF",27:"AL"}
-        
-       
-        
+    {        
         let gradesByState = d3.nest()
                             .key(function(d) { return d.CO_UF_CURSO; })
                             .rollup(function(v) { return d3.mean(v, function(d) { return d.NT_GER; }); })
                             .entries(entireData)
                             
-        let gradesDict = {}
-        
-        gradesByState.forEach(d=>gradesDict[statesCodes[d.key]] = d.value)
-        
-    	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain([0,50])
-    	
-    	function featureStyle(feature)
-        {
-            let dict = {
-                "fillColor": colorScaler(gradesDict[feature.properties.sigla]),
-                "color":"black",
-                "stroke":false,
-                "fillOpacity":0.3
-            }
-            return dict
-        }
-        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
-    	addLegend(d3.select("body"), colorScaler, 500)
+        addGeoLayer(gradesByState)
     }
     
     function draw()
@@ -245,15 +187,25 @@ function drawStatesVis(error,data)
         {
             drawBottom()
         }
-    }    
+    }
     
-
+    function fillCF()
+    {
+        cf = crossfilter(entireData)
+        
+        gradesDimension = cf.dimension(d=>d.NT_GER)   
+    }
+    
     function fillAndDraw(error,csv)
     {
-        console.log('Preencheu')
-        entireData = csv;
+        entireData = csv 
         
-        draw()
+        if(selectedVis == 'top' || selectedVis == 'bottom')
+        {
+            fillCF()
+        }
+         
+        draw()     
     }
     
     
@@ -264,6 +216,142 @@ function drawStatesVis(error,data)
     }
     else
     {	
+        if((selectedVis == 'top' || selectedVis == 'bottom') && cf == null)
+        {
+           fillCF()
+        }
+    
+        draw()
+    }
+}
+
+
+function drawInstitutionsVis(error,data)
+{
+    function addGeoLayer(arr)
+    {
+        let dict = {}
+              
+        arr.forEach(d=>dict[statesCodes[d.key]] = d.value)
+               
+        let domain = d3.extent(arr,d=>d.value)
+        domain[0] = Math.floor(0.9 * domain[0])
+        domain[1] = Math.ceil(1.1 * domain[1])
+        
+    	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
+    	
+    	function featureStyle(feature)
+        {
+            let featureDict = {
+                "fillColor": colorScaler(dict[feature.properties.sigla]),
+                "color":"black",
+                "stroke":false,
+                "fillOpacity":0.3
+            }
+            return featureDict
+        }
+        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
+    	addLegend(d3.select("body"), colorScaler, 500)
+    }   
+    
+    function drawBottom()
+    {
+    
+        function isNumeric(n)
+        {
+            return !isNaN(parseFloat(n)) && isFinite(n);
+        }
+        
+        gradesDimension.filter(d=>isNumeric(d))
+        
+        let top1value = 0.01 * cf.size()
+        
+        let top1 = gradesDimension.bottom(top1value) 
+        
+        let countsByState = d3.nest()
+                            .key(function(d) { return d.CO_UF_CURSO; })
+                            .rollup(function(v) { return v.length;})
+                            .entries(top1)
+                            
+        addGeoLayer(countsByState)
+    	
+    	gradesDimension.filterAll()
+    }
+    
+    function drawTop()
+    {
+        let top1value = 0.01 * cf.size()
+        
+        let top1 = gradesDimension.top(top1value) 
+        
+        let countsByState = d3.nest()
+                            .key(function(d) { return d.CO_UF_CURSO; })
+                            .rollup(function(v) { return v.length;})
+                            .entries(top1)
+                            
+        let countsDict = {}
+        
+        addGeoLayer(countsByState)
+    }
+    
+    function drawMean()
+    {        
+        let gradesByState = d3.nest()
+                            .key(function(d) { return d.CO_UF_CURSO; })
+                            .rollup(function(v) { return d3.mean(v, function(d) { return d.NT_GER; }); })
+                            .entries(entireData)
+                            
+        addGeoLayer(gradesByState)
+    }
+    
+    function draw()
+    {
+        if(selectedVis == 'mean')
+        {
+            drawMean()
+        }
+        else if(selectedVis == 'top')
+        {
+            drawTop()
+        }
+        else if(selectedVis == 'bottom')
+        {
+            drawBottom()
+        }
+    }
+    
+    function fillCF()
+    {
+        cf = crossfilter(entireData)
+        
+        gradesDimension = cf.dimension(d=>d.NT_GER)   
+    }
+    
+    function fillAndDraw(error,csv)
+    {
+        entireData = csv 
+        
+        if(selectedVis == 'top' || selectedVis == 'bottom')
+        {
+            fillCF()
+        }
+         
+        draw()     
+    }
+    
+    
+    if(entireData == null)
+    {
+        console.log('Era null')
+        d3.csv('dados_enade.csv').get(fillAndDraw)
+    }
+    else
+    {	
+        if((selectedVis == 'top' || selectedVis == 'bottom') && cf == null)
+        {
+           fillCF()
+        }
+    
         draw()
     }
 }
