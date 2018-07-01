@@ -263,11 +263,36 @@ function drawStatesVis(error,data)
 
 
 function drawInstitutionsVis(error,data)
-{
+{   
+    function countsByInstitution()
+    {
+        let raw = d3.nest().key(function(d) { return d.CO_IES; })
+                 .rollup(function(v) { return v.length;})
+                 .entries(entireData)
+
+        let countByInstitution = {}
+        for(let i = 0; i < raw.length ; i++)
+        {
+            let k = raw[i].key
+            countByInstitution[k] = raw[i].value
+            
+        }
+        return countByInstitution         
+    }
+
+    function normalizeCounts(counts, totalBestStudents, countByInstitution, numStudents)
+    {
+        for(let i = 0; i < counts.length ; i++)
+        {       
+            counts[i].value = (counts[i].value/totalBestStudents)/(countByInstitution[counts[i].key]/numStudents)
+        }
+    }
+
     function unrollDict(arr)
     {
        return arr.map(e=>e.value)   
-    }   
+    }
+   
     function calculateGini(arr)
     {
         let arrValues = unrollDict(arr)
@@ -344,7 +369,9 @@ function drawInstitutionsVis(error,data)
                             .key(function(d) {return d.CO_IES})
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
-                            
+        let countInst = countsByInstitution()
+        countsByState.forEach(e=>normalizeCounts(e.values,top1value,countInst,cf.size()))                     
+        
         addGeoLayer(countsByState)
     	
     	gradesDimension.filterAll()
@@ -361,10 +388,11 @@ function drawInstitutionsVis(error,data)
                             .key(function(d) {return d.CO_IES})
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
-                            
-        let countsDict = {}
-        
-        addGeoLayer(countsByState)
+       
+       let countInst = countsByInstitution()
+       countsByState.forEach(e=>normalizeCounts(e.values,top1value,countInst,cf.size()))
+                 
+       addGeoLayer(countsByState)
     }
     
     function drawMean()
