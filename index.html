@@ -46,6 +46,7 @@
 var myMap = null;
 var div = d3.select("body").append("div").attr("id","leafletmap");
 var geoLayer = null;
+var JSONData = null;
 
 //Variáveis de estado
 var selectedVis = null;
@@ -55,6 +56,7 @@ var selectedVis = null;
 var entireData = null;
 var cf = null
 var gradesDimension = null;
+var numStudents = null;
 
 
 //Seletores e callbacks
@@ -65,9 +67,8 @@ function drawMapInitial()
     myMap = new L.Map("leafletmap", {center: [-10.3333,-53.2], zoom: 4}).addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
 }
 
-
 //Função que faz a legenda
-//Cria uma série de pequenos retângulos com as cores da escala, para representar a estala.
+//Cria uma série de pequenos retângulos com as cores da escala, para representar a escala.
 var addLegend = function(target, transformer, width)
 {
     textMargin = 30
@@ -97,6 +98,33 @@ var addLegend = function(target, transformer, width)
 
 function drawStatesVis(error,data)
 {
+    function countStudentsByState()
+    {
+        let raw = d3.nest().key(function(d) { return d.CO_UF_CURSO; })
+                 .rollup(function(v) { return v.length;})
+                 .entries(entireData)
+
+        let countByState = {}
+        for(let i = 0; i < raw.length ; i++)
+        {
+            let k = raw[i].key
+            countByState[k] = raw[i].value
+            
+        }
+        return countByState          
+    }
+
+    //Fraction of the best students over the fraction of students from the state
+    
+    function normalizeCounts(counts, totalBestStudents, countByState, numStudents)
+    {
+        for(let i = 0; i < counts.length ; i++)
+        {
+            debugger        
+            counts[i].value = (counts[i].value/totalBestStudents)/(countByState[counts[i].key]/numStudents)
+        }
+    }
+
     function addGeoLayer(arr)
     {
         let dict = {}
@@ -104,8 +132,8 @@ function drawStatesVis(error,data)
         arr.forEach(d=>dict[statesCodes[d.key]] = d.value)
                
         let domain = d3.extent(arr,d=>d.value)
-        domain[0] = Math.floor(0.9 * domain[0])
-        domain[1] = Math.ceil(1.1 * domain[1])
+        domain[0] = Math.round((0.9 * domain[0]*1000))/1000
+        domain[1] = Math.round((1.1 * domain[1]*1000))/1000
         
     	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
     	
@@ -119,7 +147,7 @@ function drawStatesVis(error,data)
             }
             return featureDict
         }
-        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
+        geoLayer = L.geoJSON(JSONData,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
     	addLegend(d3.select("body"), colorScaler, 500)
     }   
     
@@ -141,7 +169,9 @@ function drawStatesVis(error,data)
                             .key(function(d) { return d.CO_UF_CURSO; })
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
-                            
+        let allCounts = countStudentsByState()
+        normalizeCounts(countsByState, top1value, allCounts, cf.size())
+                    
         addGeoLayer(countsByState)
     	
     	gradesDimension.filterAll()
@@ -157,8 +187,9 @@ function drawStatesVis(error,data)
                             .key(function(d) { return d.CO_UF_CURSO; })
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
-                            
-        let countsDict = {}
+        
+        let allCounts = countStudentsByState()
+        normalizeCounts(countsByState, top1value, allCounts, cf.size())
         
         addGeoLayer(countsByState)
     }
@@ -206,6 +237,11 @@ function drawStatesVis(error,data)
         }
          
         draw()     
+    }
+
+    if(JSONData == null)
+    {
+        JSONData = data;
     }
     
     
@@ -228,15 +264,51 @@ function drawStatesVis(error,data)
 
 function drawInstitutionsVis(error,data)
 {
+    function unrollDict(arr)
+    {
+       return arr.map(e=>e.value)   
+    }   
+    function calculateGini(arr)
+    {
+        let arrValues = unrollDict(arr)
+        
+        let num = 0
+        let den = 0
+        
+        for(let i = 0 ; i < arrValues.length ; i++)
+        {
+            for(let j = 0 ; j < arrValues.length; j++)
+            {
+                num += Math.abs(arrValues[i] - arrValues[j])
+            }
+        }
+        
+        for(let i = 0 ; i <arr.length ; i++)
+        {
+            den += arrValues[i]
+        }
+        
+        return num/(2*arrValues.length*den);  
+    }
     function addGeoLayer(arr)
     {
+        let newArr = []
+        for(let i = 0; i < arr.length ; i++)
+        {
+            let k = arr[i].key
+            let newObj = {}
+            newObj['key'] = k
+            newObj['value'] = calculateGini(arr[i].values)
+            newArr.push(newObj)
+        }
+        
         let dict = {}
               
-        arr.forEach(d=>dict[statesCodes[d.key]] = d.value)
-               
-        let domain = d3.extent(arr,d=>d.value)
-        domain[0] = Math.floor(0.9 * domain[0])
-        domain[1] = Math.ceil(1.1 * domain[1])
+        newArr.forEach(d=>dict[statesCodes["" + d.key]] = d.value)
+     
+        let domain = d3.extent(newArr,d=>d.value)
+        domain[0] = Math.round((0.9 * domain[0]*1000))/1000
+        domain[1] = Math.round((1.1 * domain[1]*1000))/1000
         
     	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
     	
@@ -250,13 +322,12 @@ function drawInstitutionsVis(error,data)
             }
             return featureDict
         }
-        geoLayer = L.geoJSON(data,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
+        geoLayer = L.geoJSON(JSONData,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
     	addLegend(d3.select("body"), colorScaler, 500)
     }   
     
     function drawBottom()
-    {
-    
+    {        
         function isNumeric(n)
         {
             return !isNaN(parseFloat(n)) && isFinite(n);
@@ -270,6 +341,7 @@ function drawInstitutionsVis(error,data)
         
         let countsByState = d3.nest()
                             .key(function(d) { return d.CO_UF_CURSO; })
+                            .key(function(d) {return d.CO_IES})
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
                             
@@ -286,6 +358,7 @@ function drawInstitutionsVis(error,data)
         
         let countsByState = d3.nest()
                             .key(function(d) { return d.CO_UF_CURSO; })
+                            .key(function(d) {return d.CO_IES})
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
                             
@@ -296,8 +369,9 @@ function drawInstitutionsVis(error,data)
     
     function drawMean()
     {        
-        let gradesByState = d3.nest()
-                            .key(function(d) { return d.CO_UF_CURSO; })
+        let gradesByState = d3.nest().
+                            key(function(d) { return d.CO_UF_CURSO})
+                            .key(function(d) {return d.CO_IES})
                             .rollup(function(v) { return d3.mean(v, function(d) { return d.NT_GER; }); })
                             .entries(entireData)
                             
@@ -338,7 +412,11 @@ function drawInstitutionsVis(error,data)
          
         draw()     
     }
-    
+
+    if(JSONData == null)
+    {
+        JSONData = data
+    }
     
     if(entireData == null)
     {
@@ -379,11 +457,20 @@ var callbackSelectVis = function(event)
     
     if(radioValue == "vis1")
     {
-        d3.json("https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson",drawStatesVis)
+        cb = drawStatesVis
     }
     else if(radioValue == "vis2")
     {
-        console.log("nada")   
+        cb = drawInstitutionsVis
+    }
+
+    if(JSONData == null)
+    {
+        d3.json('brazil-states.geojson',cb)
+    }
+    else
+    {
+        cb(null, null)
     }
 }
 
