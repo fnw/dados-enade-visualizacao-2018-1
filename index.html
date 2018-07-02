@@ -47,6 +47,7 @@ var myMap = null;
 var div = d3.select("body").append("div").attr("id","leafletmap");
 var geoLayer = null;
 var JSONData = null;
+var popup = L.popup()
 
 //Variáveis de estado
 var selectedVis = null;
@@ -98,6 +99,10 @@ var addLegend = function(target, transformer, width)
 
 function drawStatesVis(error,data)
 {
+
+  
+
+
     function countStudentsByState()
     {
         let raw = d3.nest().key(function(d) { return d.CO_UF_CURSO; })
@@ -137,6 +142,25 @@ function drawStatesVis(error,data)
         
     	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
     	
+    	function whenClicked(e) 
+        {
+            let popupString = e.target.feature.properties.name
+            popupString += ': '
+            popupString += dict[e.target.feature.properties.sigla].toFixed(2)
+            
+            popup
+            .setLatLng(e.latlng)
+            .setContent(popupString)
+            .openOn(myMap); 
+        }
+
+        function onEachFeature(feature, layer)
+        {
+            layer.on({
+                click: whenClicked
+            });
+        }
+    	
     	function featureStyle(feature)
         {
             let featureDict = {
@@ -147,7 +171,7 @@ function drawStatesVis(error,data)
             }
             return featureDict
         }
-        geoLayer = L.geoJSON(JSONData,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
+        geoLayer = L.geoJSON(JSONData,{style: featureStyle, onEachFeature: onEachFeature}).addTo(myMap);
     	addLegend(d3.select("body"), colorScaler, 500)
     }   
     
@@ -263,7 +287,9 @@ function drawStatesVis(error,data)
 
 
 function drawInstitutionsVis(error,data)
-{   
+{  
+    let extentDict = null;
+    
     function countsByInstitution()
     {
         let raw = d3.nest().key(function(d) { return d.CO_IES; })
@@ -315,6 +341,25 @@ function drawInstitutionsVis(error,data)
         
         return num/(2*arrValues.length*den);  
     }
+    
+    function getExtent(dict)
+    {
+        let unrolled = dict.map(e=>e.values.map(f=>f.value))
+        
+        let newDict = {}
+        
+        for(let i = 0 ; i < unrolled.length; i++)
+        {
+            let extent = d3.extent(unrolled[i])
+            
+            newDict[statesCodes[dict[i].key]] = extent
+        }
+        
+        return newDict
+    }
+    
+    
+    
     function addGeoLayer(arr)
     {
         let newArr = []
@@ -332,10 +377,53 @@ function drawInstitutionsVis(error,data)
         newArr.forEach(d=>dict[statesCodes["" + d.key]] = d.value)
      
         let domain = d3.extent(newArr,d=>d.value)
+        
         domain[0] = Math.round((0.9 * domain[0]*1000))/1000
         domain[1] = Math.round((1.1 * domain[1]*1000))/1000
         
     	let colorScaler = d3.scaleSequential(d3.interpolateWarm).domain(domain)
+    	
+    	function whenClicked(e) 
+        {
+            let popupString = e.target.feature.properties.name
+            popupString += ': '
+            popupString += dict[e.target.feature.properties.sigla].toFixed(2)
+            
+            let t = null
+            
+            if(selectedVis == 'mean')
+            {
+                t = 'Nota'
+            }
+            else
+            {
+                t = 'Contagem'
+            }
+            
+            popupString += '<br/>'
+            popupString += t
+            popupString += ' mínima: '
+            popupString += extentDict[e.target.feature.properties.sigla][0]
+            
+            popupString += '<br/>'
+            popupString += t
+            popupString += ' máxima: '
+            popupString += extentDict[e.target.feature.properties.sigla][1]
+            
+            
+            popup
+            .setLatLng(e.latlng)
+            .setContent(popupString)
+            .openOn(myMap); 
+        }
+
+        function onEachFeature(feature, layer)
+        {
+            layer.on({
+                click: whenClicked
+            });
+        }
+    	
     	
     	function featureStyle(feature)
         {
@@ -347,7 +435,9 @@ function drawInstitutionsVis(error,data)
             }
             return featureDict
         }
-        geoLayer = L.geoJSON(JSONData,{style:function(feature){return featureStyle(feature)}}).addTo(myMap);
+        
+        
+        geoLayer = L.geoJSON(JSONData,{style:featureStyle, onEachFeature: onEachFeature}).addTo(myMap);
     	addLegend(d3.select("body"), colorScaler, 500)
     }   
     
@@ -369,6 +459,9 @@ function drawInstitutionsVis(error,data)
                             .key(function(d) {return d.CO_IES})
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
+                            
+        extentDict = getExtent(countsByState)
+                            
         let countInst = countsByInstitution()
         countsByState.forEach(e=>normalizeCounts(e.values,top1value,countInst,cf.size()))                     
         
@@ -388,6 +481,8 @@ function drawInstitutionsVis(error,data)
                             .key(function(d) {return d.CO_IES})
                             .rollup(function(v) { return v.length;})
                             .entries(top1)
+                            
+       extentDict = getExtent(countsByState)                     
        
        let countInst = countsByInstitution()
        countsByState.forEach(e=>normalizeCounts(e.values,top1value,countInst,cf.size()))
@@ -402,6 +497,9 @@ function drawInstitutionsVis(error,data)
                             .key(function(d) {return d.CO_IES})
                             .rollup(function(v) { return d3.mean(v, function(d) { return d.NT_GER; }); })
                             .entries(entireData)
+                            
+        extentDict = getExtent(gradesByState)
+        
                             
         addGeoLayer(gradesByState)
     }
