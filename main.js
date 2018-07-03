@@ -1,7 +1,7 @@
 //Variáveis globais do mapa do Leaflet
 
 var myMap = null;
-var div = d3.select("body").append("div").attr("id","leafletmap");
+var div = d3.select("#leaflet-container").append("div").attr("id","leafletmap");
 var geoLayer = null;
 var JSONData = null;
 var popup = L.popup()
@@ -64,7 +64,7 @@ var callbackSelectVis = function(event)
     let vis = radioValue + '-' + dropdownValue
     selectedVis = dropdownValue
     
-    console.log(selectedVis)
+    console.log(vis)
     
     d3.select("svg#legend").remove()
    	
@@ -82,6 +82,8 @@ var callbackSelectVis = function(event)
     {
         cb = drawInstitutionsVis
     }
+
+    fillTextDiv(vis)
 
     if(JSONData == null)
     {

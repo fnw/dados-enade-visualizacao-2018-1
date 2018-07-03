@@ -150,7 +150,7 @@ function drawInstitutionsVis(error,data)
         
         
         geoLayer = L.geoJSON(JSONData,{style:featureStyle, onEachFeature: onEachFeature}).addTo(myMap);
-    	addLegend(d3.select("body"), colorScaler, 500)
+    	addLegend(d3.select("#leaflet-container"), colorScaler, 500)
     }   
     
     function drawBottom()
