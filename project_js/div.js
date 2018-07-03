@@ -1,11 +1,15 @@
+//This script is responsible for filling in the explanation text which is shown on the column on the right.
+
 function fillTextDiv(vis)
 {
+    //Select both the h2 element and the p element by id.
 	var h2Element = document.querySelector('h2#header-explanation')
 	var pElement = document.querySelector('p#explanation-text')
 
 	let h2Text = null
 	let pText = null
-
+    
+    //Fill in the text, depending on the visualization.
 	if(vis == 'vis1-mean')
 	{
 		h2Text = 'Average grade by state'

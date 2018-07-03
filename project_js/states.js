@@ -1,3 +1,9 @@
+//This script is very similar to institutions.js, so refer to the comments on that script for any doubts.
+//Nevertheless, there are a few differences here.
+//1. We don't group things by state and institution, just by state.
+//2. We don't care about minimums and maximums within a state.
+//3. There is no gini calculation here, just raw means and counts.
+
 function drawStatesVis(error,data)
 {
     function countStudentsByState()

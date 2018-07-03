@@ -1,4 +1,4 @@
-//Variáveis globais do mapa do Leaflet
+//Global Leaflet Map variables
 
 var myMap = null;
 var div = d3.select("#leaflet-container").append("div").attr("id","leafletmap");
@@ -6,10 +6,10 @@ var geoLayer = null;
 var JSONData = null;
 var popup = L.popup()
 
-//Variáveis de estado
+//State variables
 var selectedVis = null;
 
-//Variáveis de dados
+//Data set variables
 
 var entireData = null;
 var cf = null
@@ -17,32 +17,32 @@ var gradesDimension = null;
 var numStudents = null;
 
 
-//Seletores e callbacks
 
-//Funções
+
+//Adds the map to the page
 function drawMapInitial()
 {
     myMap = new L.Map("leafletmap", {center: [-10.3333,-53.2], zoom: 4}).addLayer(new L.TileLayer("http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"));
 }
 
-//Função que faz a legenda
-//Cria uma série de pequenos retângulos com as cores da escala, para representar a escala.
+//Responsible for creating the legend
+//Creates a series of small rectangles with the colors of the scale, to represent the scale.
 var addLegend = function(target, transformer, width)
 {
     textMargin = 30
     leftMargin = 15
-    //Eu usei let aqui porque eu vi um exemplo de coisas dando errado com var quando você usa múltiplas cópias de uma mesma função de certas formas.
-    //Além do tamanho dos retângulos, deixamos uma margem para o texto.
+    
+    //Besides the size of the rectangle, we also leave a small margin for the text.
     let svg = target.append("svg").attr("width",width + leftMargin + 30).attr("height",20 + textMargin + 5).attr("id","legend")
 
     let squareWidth = 5
 
     let [lb,ub] = transformer.domain()
 
-    //Uma escala para converter a posição do retângulo no svg para uma cor da escala.
+    //A scale to convert the position of the rectangle to a color.
     let posScaler = d3.scaleLinear().domain([0,width]).range(transformer.domain())
 
-    //Adicionando o texto com os limites superiores e inferiores da escala.
+    //Adding the text with the upper and lower bounds of the scale.
     svg.append("text").attr("x",0).attr("y",15).text(lb)
     svg.append("text").attr("x",width - squareWidth).attr("y",15).text(ub)
 
@@ -54,6 +54,7 @@ var addLegend = function(target, transformer, width)
 	}
 }
 
+//This function is called whenever a new visualization is selected, i.e. when either the radio buttons or dropdown change value.
 var callbackSelectVis = function(event)
 { 
     let radioValue = document.querySelector('input[name="w"]:checked').value;
@@ -64,8 +65,7 @@ var callbackSelectVis = function(event)
     let vis = radioValue + '-' + dropdownValue
     selectedVis = dropdownValue
     
-    console.log(vis)
-    
+    //Cleaning up what was already there    
     d3.select("svg#legend").remove()
    	
    	if(geoLayer != null)
@@ -84,7 +84,8 @@ var callbackSelectVis = function(event)
     }
 
     fillTextDiv(vis)
-
+    
+    //If we have not yet loaded the GeoJSON, do it now. Otherwise, avoid loading it multiple times, since disk I/O is slow.
     if(JSONData == null)
     {
         d3.json('project_files/brazil-states.geojson',cb)
@@ -96,7 +97,7 @@ var callbackSelectVis = function(event)
 }
 
 
-
+//Add the event listeners
 var formElement = document.querySelector('form#selectvis')
 formElement.addEventListener('change', callbackSelectVis);
 
