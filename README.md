@@ -1,9 +1,9 @@
-#Microdados ENADE
+# Microdados ENADE
 ## ENADE micro-data
 
 Test the live demo **[here](https://fnw.github.io/dados-enade-visualizacao-2018-1/)**
 
-##About
+## About
 
 This is a project dedicated to visualizing data from the ENADE exam, Brazil's national higher education assessment exam.
 
@@ -11,7 +11,7 @@ This project is built using [Leaflet](https://github.com/Leaflet/Leaflet), [D3.j
 
 In order to use this project, simply go to the live demo, or clone this repository and open the index.html file.
 
-###Dependencies
+### Dependencies
 
 This project uses:
 
