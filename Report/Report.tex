@@ -75,7 +75,7 @@
 
 %% Paper title.
 
-\title{Global Illumination for Fun and Profit}
+\title{Visualizing Regional Diffferences in Higher Education in Brazil: An Investigation of ENADE Micro-Data.}
 
 %% This is how authors are specified in the conference style
 
@@ -103,7 +103,7 @@
 
 %% Abstract section.
 \abstract{
-	Over the years, several attempts have been made to assess the quality of higher education in Brazil. Currently, the ENADE exam is one of the most important tools in this assessment, and detailed data about exam results are made available to the public. We propose a visualization tool aimed at revealing regional differences in students performance, focusing on mean scores, and relative percentages of top and bottom scorers. Our results show clear regional differences, and suggest that factors within a state can heavily influence the performance of students, specially when compared to neighboring states. 
+	Over the years, several attempts have been made to assess the quality of higher education in Brazil. Currently, the ENADE exam is one of the most important tools in this assessment, and detailed data about exam results are made available to the public. We propose a visualization tool aimed at revealing regional differences in students performance, focusing on mean scores, and relative percentages of top and bottom scorers. Our results show clear regional differences, and suggest that factors within a state can heavily influence the performance of students, particularly when compared to neighboring states. 
 } % end of abstract
 
 %% ACM Computing Classification System (CCS). 
@@ -153,7 +153,7 @@ In education, there is a constant concern with measuring the performance of stud
 
 This last exam is the focus of this work. The (INEP), an institute subject to the Brazilian Ministry of Education publishes a data set containing the results of the exam, down to the level of individual students. This provides us with a unique opportunity to perform a number of analyses, which can help us paint a detailed picture of the current state of tertiary education in Brazil, and whether not the students are achieving the (formação) expected of them, and what factors are contributing to or detracting from their education. 
 
-While there are previous work dealing with ENADE, these consist mostly of research in the field of education. The works in \cite{brito2008sinaes} and \cite{verhine2006provao} deal with ENADE from a historical and conceptual perspective. There are very few work that deal with the micro-data itself. In \cite{vista2017tecnicas
+While there are previous works dealing with ENADE, these consist mostly of research in the field of education. The works in \cite{brito2008sinaes} and \cite{verhine2006provao} deal with ENADE from a historical and conceptual perspective. There are very few works that deal with the micro-data itself. In \cite{vista2017tecnicas
 }, the authors perform data mining to discover patterns on the 2014 exam data set, but the analysis is restricted to Computer Science programs in the state of Rio Grande do Sul. To the best of our knowledge, there is no work directly comparable to ours using ENADE data in the field of visualization. 
 
 In this work, we propose a visualization tool, which aims to help the user tease out interesting patterns in the distribution of students' grades around the country. The tool focuses on highlighting regional differences, allowing the user to observe how the students of each state perform, and also how unequal is the performance of students within each state. 
@@ -173,18 +173,18 @@ Furthermore, the students are required to answer a comprehensive questionnaire, 
 \begin{itemize}
 	\item{\emph{Perception of the exam:} How hard was this exam in the general knowledge portion?}
 	\item{\emph{Opinion about their college/program:} Are the labs, equipment and materials available to your program adequate to the needs of the program? }
-	\item{\emph{Socioeconomic background:} Was your admission to the university due to affirmative action policies?}
+	\item{\emph{Socioeconomic background:} Was your admission to university due to affirmative action policies?}
 \end{itemize}
 
 Given the plethora of data available, a multitude of analysis are possible. In fact, the data set is so large and complex that any single work would be incapable of performing a satisfactorily comprehensive analysis of the data. In light of this, we focus on evaluating the grades of the students in the exam, as a stepping stone for future works.
 
 \subsection{Related Works}
 
-Most of the works relating to the ENADE exam are develop within the field of educational research. In \cite{brito2008sinaes}, the authors deal with the conception of the National System for the Evaluation of Higher Education (from the Portuguese, \emph{Sistema Nacional de Avaliação do Ensino Superior}, SINAES). The ENADE is a tool within the SINAES, and the authors also deal with de conception and eventual implementation of ENADE. In \cite{verhine2006provao}, the authors also deal with the same topics, but also perform a comparison between ENADE and its predecessor exam, known as ``Provão'', and in particular the authors evaluate how well ENADE managed to respond to the criticism levelled at the Provão exam.
+Most of the works relating to the ENADE exam are developed within the field of educational research. In \cite{brito2008sinaes}, the authors deal with the conception of the National System for the Evaluation of Higher Education (from the Portuguese, \emph{Sistema Nacional de Avaliação do Ensino Superior}, SINAES). The ENADE is a tool within the SINAES, and the authors also deal with the conception and eventual implementation of ENADE. In \cite{verhine2006provao}, the authors also deal with the same topics, but also perform a comparison between ENADE and its predecessor exam, known as ``Provão'', and in particular the authors evaluate how well ENADE managed to respond to the criticism levelled at the Provão exam.
 
-In \cite{vista2017tecnicas}, the authors apply data mining techniques to the 2014 ENADE data, focusing on the Computer Science programs in the state of Rio Grande do Sul, and focuses on finding groupings of the data at the institution level.
+In \cite{vista2017tecnicas}, the authors apply data mining techniques to the 2014 ENADE data, focusing on the Computer Science programs in the state of Rio Grande do Sul, and focus on finding groupings of the data at the institution level.
 
-The closest work we could find to our own actually deals with ENEM data \cite{viggiano2013desempenho}, which is also publicly available. This work also investigates regional differences in ENADE performance, but does so at the level of macro-regions (there are five officially recognized macro-regions in Brazil, North, Northeast, Southeast, South and Center-West). 
+The closest work we could find to our own actually deals with ENEM data \cite{viggiano2013desempenho}, which is also publicly available. This work also investigates regional differences in ENADE performance, but does so at the level of macro-regions (there are five officially recognized macro-regions in Brazil, North, Northeast, Southeast, South and Center-West), instead of looking at the level of individual states. 
 
 \section{Proposed Method}
 
@@ -223,7 +223,7 @@ Again, instead of presenting the individual values for $F_{top}^{i}$ and $F_{bot
 
 %Incluir duas imagens
 
-We use HTML and JavaScript to produce the web page containing the visualization. The map displayed is created using the Leaflet library. In order to read the data and perform reductions and sub-setting, we employ the D3.js and Crossfilter.js libraries. The visualization tool can be accessed at the address \url{https://fnw.github.io/dados-enade-visualizacao-2018-1/}.
+We use HTML and JavaScript to produce the web page containing the visualization. The map displayed is created using the Leaflet library. In order to read the data and perform reductions and sub-setting, we employ the D3.js and Crossfilter libraries. The visualization tool can be accessed at the address \url{https://fnw.github.io/dados-enade-visualizacao-2018-1/}.
 
 
 \section{Results}
@@ -253,7 +253,7 @@ The first interesting case is that of Espírito Santo, which seems to be one of 
 	\label{fig:estop}
 \end{figure}
 
-Meanwhile, on the northeast macro-region of Brasil, which is comprised of Maranhão, Piauí, Ceará, Rio Grande do Norte, Paraíba, Pernambuco, Alagoas, Sergipe e Bahia, only two states have a value of $F_{top}$ greater than one. These states are Ceará and Rio Grande do Norte, with values of 1.52 and 1.22, respectively. Figure \ref{fig:ce} shows these two states in the context of the macro-region.
+Meanwhile, on the northeast macro-region of Brasil, which is comprised of Maranhão, Piauí, Ceará, Rio Grande do Norte, Paraíba, Pernambuco, Alagoas, Sergipe and Bahia, only two states have a value of $F_{top}$ greater than one. These states are Ceará and Rio Grande do Norte, with values of 1.52 and 1.22, respectively. Figure \ref{fig:ce} shows these two states in the context of the macro-region.
 
 \begin{figure}
 	\centering
