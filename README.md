@@ -1,37 +1,28 @@
-## Welcome to GitHub Pages
+#Microdados ENADE
+## ENADE micro-data
 
-You can use the [editor on GitHub](https://github.com/fnw/dados-enade-visualizacao-2018-1/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+Test the live demo **[here](https://fnw.github.io/dados-enade-visualizacao-2018-1/)**
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+##About
 
-### Markdown
+This is a project dedicated to visualizing data from the ENADE exam, Brazil's national higher education assessment exam.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+This project is built using [Leaflet](https://github.com/Leaflet/Leaflet), [D3.js](https://github.com/d3/d3) and [Crossfilter](https://github.com/crossfilter/crossfilter). We also use Bootstrap for the page layout.
 
-```markdown
-Syntax highlighted code block
+In order to use this project, simply go to the live demo, or clone this repository and open the index.html file.
 
-# Header 1
-## Header 2
-### Header 3
+###Dependencies
 
-- Bulleted
-- List
+This project uses:
 
-1. Numbered
-2. List
+* D3.js v4
+* Leaflet 1.3.1
+* Crossfilter 1.4.6
+* Bootstrap 4.1.1
 
-**Bold** and _Italic_ and `Code` text
+Aditionally, Bootstrap depends on:
 
-[Link](url) and ![Image](src)
-```
+* jQuery 3.3.1
+* popper 1.14.3
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/fnw/dados-enade-visualizacao-2018-1/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+This files are all requested via CDN on the index.html page.
